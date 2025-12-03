@@ -18,10 +18,10 @@ y = np.arange(N)
 xx, yy = np.meshgrid(x, y)
 cx, cy = N//2, N//2
 
-# Binary Mask A: transparent circular aperture
+# Mask A: transparent circular aperture (binary)
 A = ((xx - cx)**2 + (yy - cy)**2 <= (D/2)**2).astype(float)
 
-# Binary Mask A': complement of A (整個方形都可以透，只是圓孔挖掉)
+# Mask A': complement of A (整個方形都可以透，只是圓孔挖掉)
 A_comp = 1.0 - A
 
 # Open aperture (full square)
@@ -32,7 +32,9 @@ def fraunhofer(mask):
     E = fft2(mask)
     E = myfftshift(E)
     I = np.abs(E)**2
-    I /= np.max(I)    # normalize to [0,1]
+    m = np.max(I)
+    if m > 0:
+        I = I / m      # normalize to [0,1]，避免除以 0
     return I
 
 # ========== 中央裁切，放大看 pattern ==========
@@ -44,7 +46,7 @@ def crop_center(I, M):
 # ========== display helper (with center & gamma) ==========
 def draw_intensity(scene, I, title):
     # 使用 HTML 放大 title 字體 + 粗體
-    scene.title = "<b><font size=5>" + title + "</font></b>"
+    scene.title = "<b><font size=3>" + title + "</font></b>"
     scene.lights = []
     scene.ambient = color.gray(0.9)
 
@@ -68,8 +70,9 @@ I_open   = fraunhofer(A_open)
 I_open_c = crop_center(I_open, CROP)
 
 # ========== 定義三個 case（用「強度透過率」T） ==========
+# T_A, T_Ap 是強度透過率；實際乘在 mask 上的是振幅 sqrt(T)
 cases = [
-    ("Case 1: Binary masks (T_A = 1.0, T_A' = 0.0)", 1.0, 0.0),
+    ("Case 1: Limiting case (T_A = 1.0, T_A' = 0.0)", 1.0, 0.0),
     ("Case 2: Partial transparency (T_A = 0.8, T_A' = 0.2)", 0.8, 0.2),
     ("Case 3: Partial transparency (T_A = 0.6, T_A' = 0.4)", 0.6, 0.4),
 ]
@@ -93,14 +96,16 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     E_A_comp = myfftshift(fft2(maskA_comp))
     E_sum    = E_A + E_A_comp
     I_sum    = np.abs(E_sum)**2
-    I_sum   /= np.max(I_sum)
+    m_sum = np.max(I_sum)
+    if m_sum > 0:
+        I_sum = I_sum / m_sum
 
     # 中央裁切
     I_A_c      = crop_center(I_A,      CROP)
     I_A_comp_c = crop_center(I_A_comp, CROP)
     I_sum_c    = crop_center(I_sum,    CROP)
 
-    # ---------- VPython 畫 4 個畫面（橫向排成一列） ----------
+    # ---------- VPython 畫 4 個畫面（每個 case 一列） ----------
     y_offset = idx * 430   # 每個 case 往下排一列
 
     scene1 = canvas(width=400, height=400, align='left',
@@ -121,11 +126,8 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     draw_intensity(scene4, I_open_c,
                    f"[{case_name}] Pattern through open aperture")
 
-    # ---------- Babinet error（只對 Case 1 做標準 Babinet 檢查） ----------
+    # 只有在 T_A = 1, T_A' = 0 以外的 case，打印提示
     if T_A == 1.0 and T_Ap == 0.0:
-        E_open = myfftshift(fft2(A_open))
-        err = np.max(np.abs(E_A + E_A_comp - E_open)) / np.max(np.abs(E_open))
-        print(case_name, "Babinet relative error =", err)
+        print(case_name, "(A' 完全不透光，此時只剩下 A 的 pattern，sum = A)")
     else:
-        # 部分透明時，已經不是標準 Babinet，這裡只印個資訊
-        print(case_name, "simulated (no exact Babinet check for partial transparency).")
+        print(case_name, "simulated with partial transparency.")
