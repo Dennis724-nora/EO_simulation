@@ -131,3 +131,6 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
         print(case_name, "(A' 完全不透光，此時只剩下 A 的 pattern，sum = A)")
     else:
         print(case_name, "simulated with partial transparency.")
+
+# b12901058 add
+input("Press Enter to close the VPython window...")

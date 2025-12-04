@@ -169,3 +169,6 @@ label(pos=center_pos + vector(0.2, -1.1, 0),
       text="Airy pattern (schematic)", box=False, height=11)
 
 print("Updated system geometry (bigger mask spacing & double-cone lens1) complete.")
+
+# b12901058 add
+input("Press Enter to close the VPython window...")

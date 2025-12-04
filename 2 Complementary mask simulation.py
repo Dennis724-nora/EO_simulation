@@ -99,3 +99,6 @@ draw_intensity(scene4, I_open_c,
 E_open = myfftshift(fft2(A_open))
 err = np.max(np.abs(E_A + E_A_comp - E_open)) / np.max(np.abs(E_open))
 print("Babinet relative error =", err)
+
+# b12901058 add
+input("Press Enter to close the VPython window...")
