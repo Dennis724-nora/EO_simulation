@@ -1,6 +1,12 @@
-from vpython import *
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import fft2
+
+# === 解決中文顯示問題的程式碼 ===
+# 選擇一個支援中文的字體
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False # 解決負號顯示問題
+# ==================================
 
 # ---------- small helper: 2D fftshift ----------
 def myfftshift(X):
@@ -57,48 +63,56 @@ I_A_comp_c = crop_center(I_A_comp, CROP)
 I_open_c   = crop_center(I_open,   CROP)
 I_sum_c    = crop_center(I_sum,    CROP)
 
-# ========== display helper (with center & gamma) ==========
-def draw_intensity(scene, I, title):
-    # 使用 HTML 放大 title 字體 + 粗體
-    scene.title = "<b><font size=6>" + title + "</font></b>"
-    scene.lights = []
-    scene.ambient = color.gray(0.9)
+# ========== Matplotlib 繪圖 (2x2) ==========
+fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 
-    # gamma 調整，讓暗暗的 ring / side lobe 也看得見
-    gamma = 0.25
-    I_disp = I**gamma
+# 繪圖參數：使用 gamma 調整，讓暗處可見
+gamma = 0.25 
 
-    M = I.shape[0]
-    scene.center = vector(M/2, M/2, 0)
+# === 繪製函數 ===
+def plot_pattern(ax, I_cropped, title):
+    # Gamma 調整
+    I_disp = I_cropped**gamma
+    
+    ax.imshow(I_disp, cmap='gray', vmin=0, vmax=1)
+    ax.set_title(title, fontsize=12)
+    ax.set_xticks([])
+    ax.set_yticks([]) # 隱藏刻度
 
-    for i in range(M):
-        for j in range(M):
-            val = float(I_disp[i, j])
-            box(canvas=scene,
-                pos=vector(i, j, 0),
-                length=1, height=1, width=0.1,
-                color=vector(val, val, val))
+# Row 0, Col 0: 圓孔 A
+plot_pattern(axes[0, 0], I_A_c, "圓孔 A (Aperture A) 繞射強度 $I_A$")
 
-# ========== 4 個畫面 (水平排列成 2×2) ==========
-scene1 = canvas(width=400, height=400)
-scene2 = canvas(width=400, height=400)
-scene3 = canvas(width=400, height=400)
-scene4 = canvas(width=400, height=400)
+# Row 0, Col 1: 圓板 A'
+plot_pattern(axes[0, 1], I_A_comp_c, "圓板 A' (Complement A') 繞射強度 $I_{A'}$")
 
-draw_intensity(scene1, I_A_c,
-               "Pattern through mask A (Fraunhofer Airy disk, cropped center)")
-draw_intensity(scene2, I_A_comp_c,
-               "Pattern through mask A' (complement aperture, cropped center)")
-draw_intensity(scene3, I_sum_c,
-               "Pattern through both masks A and A' simultaneously (cropped)")
-draw_intensity(scene4, I_open_c,
-               "Pattern through open aperture (square, cropped center)")
+# Row 1, Col 0: 場疊加 (E_A + E_A')
+plot_pattern(axes[1, 0], I_sum_c, "場疊加 $|E_A + E_{A'}|^2$")
 
+# Row 1, Col 1: 全透光
+plot_pattern(axes[1, 1], I_open_c, "全透光 (Open Aperture) 繞射強度 $I_{Open}$")
+
+
+# 調整子圖間距
+plt.tight_layout()
+
+# 顯示圖形
+plt.savefig(f'{N}_point_binary_transparency.png', dpi=300, bbox_inches='tight')
+plt.show()
 
 # ========== Babinet check ==========
+# 檢查 Babinet's principle: E_A + E_A' = E_open (在非零度角時)
+# E_open 是全透光光圈的電場（單一亮點）
+
+# 由於 E_open 只有中心有非零值 (代表光軸上的光線)，
+# 在繞射圖案的非中心點 (即 E_open ≈ 0) 應滿足 E_A + E_A' ≈ 0
+# 由於我們已經計算了 E_A + E_A'，且 E_open 也是已知的 (一個中心化後的 delta 函數)
+# 我們可以直接檢查 E_sum 是否與 E_open 相符。
+
+# 重新計算 E_open 的歸一化，使其最大值為 1，以計算相對誤差
+# 注意：E_open 實際上只在中心有值，其他地方為 0。
+# 繞射場通常在中心有最大值，因此我們用這個最大值來計算相對誤差。
+# 找出誤差：(|E_A + E_A' - E_open|) / |E_open| 的最大值
+# 這檢查了電場疊加是否等於全透光光圈的電場
 E_open = myfftshift(fft2(A_open))
 err = np.max(np.abs(E_A + E_A_comp - E_open)) / np.max(np.abs(E_open))
 print("Babinet relative error =", err)
-
-# b12901058 add
-input("Press Enter to close the VPython window...")

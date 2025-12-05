@@ -1,6 +1,12 @@
-from vpython import *
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import fft2
+
+# === 解決中文顯示問題的程式碼 ===
+# 選擇一個支援中文的字體
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False # 解決負號顯示問題
+# ==================================
 
 # ---------- small helper: 2D fftshift ----------
 def myfftshift(X):
@@ -9,7 +15,7 @@ def myfftshift(X):
 
 # ========== parameters ==========
 N = 200          # FFT grid size
-D = 80           # circular aperture diameter (in pixels)
+D = 1           # circular aperture diameter (in pixels)
 CROP = 80        # 中央要看的區域大小 (CROP x CROP)
 
 # ========== build aperture masks ==========
@@ -43,28 +49,6 @@ def crop_center(I, M):
     h = M//2
     return I[cx-h:cx+h, cy-h:cy+h]
 
-# ========== display helper (with center & gamma) ==========
-def draw_intensity(scene, I, title):
-    # 使用 HTML 放大 title 字體 + 粗體
-    scene.title = "<b><font size=3>" + title + "</font></b>"
-    scene.lights = []
-    scene.ambient = color.gray(0.9)
-
-    # gamma 調整，讓暗暗的 ring / side lobe 也看得見
-    gamma = 0.25
-    I_disp = I**gamma
-
-    M = I.shape[0]
-    scene.center = vector(M/2, M/2, 0)
-
-    for i in range(M):
-        for j in range(M):
-            val = float(I_disp[i, j])
-            box(canvas=scene,
-                pos=vector(i, j, 0),
-                length=1, height=1, width=0.1,
-                color=vector(val, val, val))
-
 # ========== 共同的 open aperture pattern ==========
 I_open   = fraunhofer(A_open)
 I_open_c = crop_center(I_open, CROP)
@@ -77,11 +61,32 @@ cases = [
     ("Case 3: Partial transparency (T_A = 0.6, T_A' = 0.4)", 0.6, 0.4),
 ]
 
+# ========== Matplotlib 初始化 (3行 x 4列) ==========
+# figsize (16, 12) 確保有足夠的空間放置 12 張圖
+fig, axes = plt.subplots(len(cases), 4, figsize=(16, 12)) 
+plt.rcParams['font.size'] = 10
+
+# Matplotlib 輔助函數：繪製裁切後的強度圖案
+def plot_intensity(ax, I_cropped, title):
+    # 使用 gamma 調整 (與原 VPython 程式碼一致)
+    gamma = 0.25
+    I_disp = I_cropped**gamma
+    
+    # 使用 imshow 繪製灰階圖案
+    im = ax.imshow(I_disp, cmap='gray', vmin=0, vmax=1)
+    ax.set_title(title)
+    
+    # 隱藏刻度，讓圖形看起來更像 VPython 的箱子圖
+    ax.set_xticks([])
+    ax.set_yticks([])
+
 # ========== 逐個 case 模擬並畫圖 ==========
 for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     # 振幅透過率（因為 I ∝ |E|^2）
-    tA  = np.sqrt(T_A)
-    tAp = np.sqrt(T_Ap)
+    # tA  = np.sqrt(T_A)
+    # tAp = np.sqrt(T_Ap)
+    tA = T_A
+    tAp = T_Ap
 
     # 對應到實際的「振幅 mask」
     maskA      = tA  * A
@@ -105,26 +110,23 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     I_A_comp_c = crop_center(I_A_comp, CROP)
     I_sum_c    = crop_center(I_sum,    CROP)
 
-    # ---------- VPython 畫 4 個畫面（每個 case 一列） ----------
-    y_offset = idx * 430   # 每個 case 往下排一列
-
-    scene1 = canvas(width=400, height=400, align='left',
-                    x=0,   y=y_offset)
-    scene2 = canvas(width=400, height=400, align='left',
-                    x=410, y=y_offset)
-    scene3 = canvas(width=400, height=400, align='left',
-                    x=820, y=y_offset)
-    scene4 = canvas(width=400, height=400, align='left',
-                    x=1230, y=y_offset)
-
-    draw_intensity(scene1, I_A_c,
-                   f"[{case_name}] Pattern through mask A")
-    draw_intensity(scene2, I_A_comp_c,
-                   f"[{case_name}] Pattern through mask A'")
-    draw_intensity(scene3, I_sum_c,
-                   f"[{case_name}] Pattern through A + A' (field sum)")
-    draw_intensity(scene4, I_open_c,
-                   f"[{case_name}] Pattern through open aperture")
+    # ---------- Matplotlib 繪製 4 個畫面（第 idx 行） ----------
+    
+    # Column 0: Mask A
+    plot_intensity(axes[idx, 0], I_A_c,
+                   f"[{case_name}]\nMask A (T={T_A})")
+    
+    # Column 1: Mask A'
+    plot_intensity(axes[idx, 1], I_A_comp_c,
+                   f"[{case_name}]\nMask A' (T={T_Ap})")
+    
+    # Column 2: Field Sum (A + A')
+    plot_intensity(axes[idx, 2], I_sum_c,
+                   f"[{case_name}]\nField Sum (|E_A + E_A'|^2)")
+    
+    # Column 3: Open Aperture (所有 case 相同，用於比較 Babinet's principle)
+    plot_intensity(axes[idx, 3], I_open_c,
+                   f"[{case_name}]\nOpen Aperture (Reference)")
 
     # 只有在 T_A = 1, T_A' = 0 以外的 case，打印提示
     if T_A == 1.0 and T_Ap == 0.0:
@@ -132,5 +134,9 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     else:
         print(case_name, "simulated with partial transparency.")
 
-# b12901058 add
-input("Press Enter to close the VPython window...")
+# 調整子圖間距，防止標題重疊
+plt.tight_layout()
+
+# 顯示 Matplotlib 圖形
+plt.savefig(f'{N}_point_partial_transparency.png', dpi=300, bbox_inches='tight')
+plt.show()
