@@ -38,11 +38,14 @@ def fraunhofer(mask):
     E = fft2(mask)
     E = myfftshift(E)
     I = np.abs(E)**2
-    I /= np.max(I)    # normalize to [0,1]
+    # I /= np.max(I)    # normalize to [0,1]
     return I
 
 I_A      = fraunhofer(A)
 I_A_comp = fraunhofer(A_comp)
+I_max = max(np.max(I_A), np.max(I_A_comp))
+I_A /= I_max
+I_A_comp /= I_max
 I_open   = fraunhofer(A_open)
 
 # field sum: E_A + E_A'
@@ -50,7 +53,7 @@ E_A      = myfftshift(fft2(A))
 E_A_comp = myfftshift(fft2(A_comp))
 E_sum    = E_A + E_A_comp
 I_sum    = np.abs(E_sum)**2
-I_sum   /= np.max(I_sum)
+# I_sum   /= np.max(I_sum)
 
 # ========== 中央裁切，放大看 pattern ==========
 def crop_center(I, M):
