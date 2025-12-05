@@ -89,8 +89,8 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     # tAp = T_Ap
 
     # 對應到實際的「振幅 mask」
-    maskA      = tA  * A + (1-tAp) * A_comp
-    maskA_comp = tAp * A_comp + (1-tA) * A
+    maskA      = tA  * A + tAp * A_comp
+    maskA_comp = tA * A_comp + tAp * A
 
     # Fraunhofer patterns
     I_A      = fraunhofer(maskA)
@@ -117,11 +117,11 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     
     # Column 0: Mask A
     plot_intensity(axes[idx, 0], I_A_c,
-                   f"[{case_name}]\nMask A (T={T_A})")
+                   f"[{case_name}]\nMask A")
     
     # Column 1: Mask A'
     plot_intensity(axes[idx, 1], I_A_comp_c,
-                   f"[{case_name}]\nMask A' (T={T_Ap})")
+                   f"[{case_name}]\nMask A'")
     
     # Column 2: Field Sum (A + A')
     plot_intensity(axes[idx, 2], I_sum_c,
@@ -131,11 +131,7 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     plot_intensity(axes[idx, 3], I_open_c,
                    f"[{case_name}]\nOpen Aperture (Reference)")
 
-    # 只有在 T_A = 1, T_A' = 0 以外的 case，打印提示
-    if T_A == 1.0 and T_Ap == 0.0:
-        print(case_name, "(A' 完全不透光，此時只剩下 A 的 pattern，sum = A)")
-    else:
-        print(case_name, "simulated with partial transparency.")
+    print(case_name, "simulated with partial transparency.")
     # ========== Babinet check ==========
     # 檢查 Babinet's principle: E_A + E_A' = E_open (在非零度角時)
     # E_open 是全透光光圈的電場（單一亮點）
