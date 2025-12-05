@@ -82,11 +82,9 @@ def plot_intensity(ax, I_cropped, title):
 
 # ========== 逐個 case 模擬並畫圖 ==========
 for idx, (case_name, T_A, T_Ap) in enumerate(cases):
-    # 振幅透過率（因為 I ∝ |E|^2）
-    tA  = np.sqrt(T_A)
-    tAp = np.sqrt(T_Ap)
-    # tA = T_A
-    # tAp = T_Ap
+    # 振幅透過率
+    tA = T_A
+    tAp = T_Ap
 
     # 對應到實際的「振幅 mask」
     maskA      = tA  * A + tAp * A_comp
@@ -133,21 +131,8 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
 
     print(case_name, "simulated with partial transparency.")
     # ========== Babinet check ==========
-    # 檢查 Babinet's principle: E_A + E_A' = E_open (在非零度角時)
-    # E_open 是全透光光圈的電場（單一亮點）
-
-    # 由於 E_open 只有中心有非零值 (代表光軸上的光線)，
-    # 在繞射圖案的非中心點 (即 E_open ≈ 0) 應滿足 E_A + E_A' ≈ 0
-    # 由於我們已經計算了 E_A + E_A'，且 E_open 也是已知的 (一個中心化後的 delta 函數)
-    # 我們可以直接檢查 E_sum 是否與 E_open 相符。
-
-    # 重新計算 E_open 的歸一化，使其最大值為 1，以計算相對誤差
-    # 注意：E_open 實際上只在中心有值，其他地方為 0。
-    # 繞射場通常在中心有最大值，因此我們用這個最大值來計算相對誤差。
-    # 找出誤差：(|E_A + E_A' - E_open|) / |E_open| 的最大值
-    # 這檢查了電場疊加是否等於全透光光圈的電場
     E_open = myfftshift(fft2(A_open))
-    err = np.max(np.abs(E_A + E_A_comp - E_open)) / np.max(np.abs(E_open))
+    err = np.sum(np.abs(E_A + E_A_comp - E_open)) / np.sum(np.abs(E_open))
     print("Babinet relative error =", err)
 
 # 調整子圖間距，防止標題重疊

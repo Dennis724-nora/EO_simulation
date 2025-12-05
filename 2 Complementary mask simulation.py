@@ -103,19 +103,6 @@ plt.savefig(f'{N}_point_binary_transparency.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 # ========== Babinet check ==========
-# 檢查 Babinet's principle: E_A + E_A' = E_open (在非零度角時)
-# E_open 是全透光光圈的電場（單一亮點）
-
-# 由於 E_open 只有中心有非零值 (代表光軸上的光線)，
-# 在繞射圖案的非中心點 (即 E_open ≈ 0) 應滿足 E_A + E_A' ≈ 0
-# 由於我們已經計算了 E_A + E_A'，且 E_open 也是已知的 (一個中心化後的 delta 函數)
-# 我們可以直接檢查 E_sum 是否與 E_open 相符。
-
-# 重新計算 E_open 的歸一化，使其最大值為 1，以計算相對誤差
-# 注意：E_open 實際上只在中心有值，其他地方為 0。
-# 繞射場通常在中心有最大值，因此我們用這個最大值來計算相對誤差。
-# 找出誤差：(|E_A + E_A' - E_open|) / |E_open| 的最大值
-# 這檢查了電場疊加是否等於全透光光圈的電場
 E_open = myfftshift(fft2(A_open))
-err = np.max(np.abs(E_A + E_A_comp - E_open)) / np.max(np.abs(E_open))
+err = np.sum(np.abs(E_A + E_A_comp - E_open)) / np.sum(np.abs(E_open))
 print("Babinet relative error =", err)
