@@ -57,8 +57,8 @@ I_open_c = crop_center(I_open, CROP)
 # T_A, T_Ap 是強度透過率；實際乘在 mask 上的是振幅 sqrt(T)
 cases = [
     ("Case 1: Limiting case (T_A = 1.0, T_A' = 0.0)", 1.0, 0.0),
-    ("Case 2: Partial transparency (T_A = 0.8, T_A' = 0.2)", 0.8, 0.2),
-    ("Case 3: Partial transparency (T_A = 0.6, T_A' = 0.4)", 0.6, 0.4),
+    ("Case 2: Partial transparency (T_A = 0.64, T_A' = 0.04)", 0.64, 0.04),
+    ("Case 3: Partial transparency (T_A = 0.36, T_A' = 0.16)", 0.36, 0.16),
 ]
 
 # ========== Matplotlib 初始化 (3行 x 4列) ==========
@@ -71,6 +71,9 @@ def plot_intensity(ax, I_cropped, title):
     # 使用 gamma 調整 (與原 VPython 程式碼一致)
     gamma = 0.25
     I_disp = I_cropped**gamma
+
+    # sqrt for better observation
+    I_disp = np.sqrt(I_disp)
     
     # 使用 imshow 繪製灰階圖案
     im = ax.imshow(I_disp, cmap='gray', vmin=0, vmax=1)
@@ -83,8 +86,8 @@ def plot_intensity(ax, I_cropped, title):
 # ========== 逐個 case 模擬並畫圖 ==========
 for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     # 振幅透過率
-    tA = T_A
-    tAp = T_Ap
+    tA = np.sqrt(T_A)
+    tAp = np.sqrt(T_Ap)
 
     # 對應到實際的「振幅 mask」
     maskA      = tA  * A + tAp * A_comp
@@ -115,19 +118,19 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     
     # Column 0: Mask A
     plot_intensity(axes[idx, 0], I_A_c,
-                   f"[{case_name}]\nMask A")
+                   f"[{case_name}]\nMask A (sqrt I)")
     
     # Column 1: Mask A'
     plot_intensity(axes[idx, 1], I_A_comp_c,
-                   f"[{case_name}]\nMask A'")
+                   f"[{case_name}]\nMask A' (sqrt I)")
     
     # Column 2: Field Sum (A + A')
     plot_intensity(axes[idx, 2], I_sum_c,
-                   f"[{case_name}]\nField Sum (|E_A + E_A'|^2)")
+                   f"[{case_name}]\nField Sum (|E_A + E_A'|^2) (sqrt I)")
     
     # Column 3: Open Aperture (所有 case 相同，用於比較 Babinet's principle)
     plot_intensity(axes[idx, 3], I_open_c,
-                   f"[{case_name}]\nOpen Aperture (Reference)")
+                   f"[{case_name}]\nOpen Aperture (Reference) (sqrt I)")
 
     print(case_name, "simulated with partial transparency.")
     # ========== Babinet check ==========
