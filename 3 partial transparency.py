@@ -68,7 +68,7 @@ plt.rcParams['font.size'] = 10
 
 # Matplotlib 輔助函數：繪製裁切後的強度圖案
 def plot_intensity(ax, I_cropped, title):
-    # 使用 gamma 調整 (與原 VPython 程式碼一致)
+    # 使用 gamma 調整
     gamma = 0.25
     I_disp = I_cropped**gamma
 
@@ -138,9 +138,7 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     err = np.sum(np.abs(E_A + E_A_comp - E_open)) / np.sum(np.abs(E_open))
     print("Babinet relative error =", err)
 
-# 調整子圖間距，防止標題重疊
 plt.tight_layout()
 
-# 顯示 Matplotlib 圖形
 plt.savefig(f'{N}_point_partial_transparency.png', dpi=300, bbox_inches='tight')
 plt.show()

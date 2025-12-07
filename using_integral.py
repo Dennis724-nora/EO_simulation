@@ -84,7 +84,7 @@ for stage in range(3):
     maxI_E = amax(Inte_E)
     
     # Matplotlib 繪圖
-    ax_E = axes[stage, 1] # 選擇第 stage 行, 第 1 列的子圖
+    ax_E = axes[stage, 1]
     ax_E.imshow(Inte_E / maxI_E, 
                 cmap='gray', 
                 extent=[side.min(), side.max(), side.min(), side.max()])
