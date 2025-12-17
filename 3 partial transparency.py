@@ -118,19 +118,19 @@ for idx, (case_name, T_A, T_Ap) in enumerate(cases):
     
     # Column 0: Mask A
     plot_intensity(axes[idx, 0], I_A_c,
-                   f"[{case_name}]\nMask A (sqrt I)")
+                   f"[{case_name}]\nMask A (I)")
     
     # Column 1: Mask A'
     plot_intensity(axes[idx, 1], I_A_comp_c,
-                   f"[{case_name}]\nMask A' (sqrt I)")
+                   f"[{case_name}]\nMask A' (I)")
     
     # Column 2: Field Sum (A + A')
     plot_intensity(axes[idx, 2], I_sum_c,
-                   f"[{case_name}]\nField Sum (|E_A + E_A'|^2) (sqrt I)")
+                   f"[{case_name}]\nField Sum (|E_A + E_A'|^2) (I)")
     
     # Column 3: Open Aperture (所有 case 相同，用於比較 Babinet's principle)
     plot_intensity(axes[idx, 3], I_open_c,
-                   f"[{case_name}]\nOpen Aperture (Reference) (sqrt I)")
+                   f"[{case_name}]\nOpen Aperture (Reference) (I)")
 
     print(case_name, "simulated with partial transparency.")
     # ========== Babinet check ==========
