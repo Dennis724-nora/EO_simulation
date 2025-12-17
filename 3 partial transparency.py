@@ -73,7 +73,7 @@ def plot_intensity(ax, I_cropped, title):
     I_disp = I_cropped**gamma
 
     # sqrt for better observation
-    I_disp = np.sqrt(I_disp)
+    # I_disp = np.sqrt(I_disp)
     
     # 使用 imshow 繪製灰階圖案
     im = ax.imshow(I_disp, cmap='gray', vmin=0, vmax=1)
